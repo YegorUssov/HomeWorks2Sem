@@ -1,0 +1,307 @@
+
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import javax.swing.*;
+import javax.swing.text.Document;
+import javax.swing.text.Element;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.InputStream;;
+import java.net.URLConnection;
+import java.awt.GridBagConstraints;
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.io.IOException;
+import java.net.URL;
+
+public class GBC extends GridBagConstraints
+{
+
+    public GBC(int gridx, int gridy)
+    {
+        this.gridx = gridx;
+        this.gridy = gridy;
+    }
+
+    public GBC(int gridx, int gridy, int gridwidth, int gridheight)
+    {
+        this.gridx = gridx;
+        this.gridy = gridy;
+        this.gridwidth = gridwidth;
+        this.gridheight = gridheight;
+    }
+
+
+    public GBC setAnchor(int anchor)
+    {
+        this.anchor = anchor;
+        return this;
+    }
+
+    public GBC setFill(int fill)
+    {
+        this.fill = fill;
+        return this;
+    }
+
+
+    public GBC setWeight(double weightx, double weighty)
+    {
+        this.weightx = weightx;
+        this.weighty = weighty;
+        return this;
+    }
+
+
+    public GBC setInsets(int distance)
+    {
+        this.insets = new java.awt.Insets(
+                distance, distance, distance, distance);
+        return this;
+    }
+
+
+    public GBC setInsets(int top, int left, int bottom, int right)
+    {
+        this.insets = new java.awt.Insets(
+                top, left, bottom, right);
+        return this;
+    }
+
+
+    public GBC setIpad(int ipadx, int ipady)
+    {
+        this.ipadx = ipadx;
+        this.ipady = ipady;
+        return this;
+    }
+}
+
+public class Weather {
+    String city;
+    String weatherType;
+    String imgType;
+    String humidity;
+    String tom, tomNight;
+    int temperature;
+
+    public String toString() {
+        return "Weather[city= " + city + ", weatherType=" + weatherType
+                + ", temperature= " + temperature + ",humidity= " + humidity
+                + "]";
+    }
+
+}
+
+public class WeatherFrame extends JFrame {
+    static Weather today;
+    JPanel panel;
+    JTextField idField;
+    JButton btn;
+    JLabel label;
+    JLabel tLabel;
+    JLabel iLabel;
+    Box b;
+    static String id;
+    static int t;
+    Container contentPane;
+
+    public WeatherFrame() {
+        today = null;
+        JPopupMenu menu = new JPopupMenu();
+        menu.add(new AbstractAction("Пенза") {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                setCity("1266");
+            }
+        });
+
+        GridBagLayout layout = new GridBagLayout();
+        setTitle("Weather");
+        setPreferredSize(new Dimension(350, 300));
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setVisible(true);
+        contentPane = getContentPane();
+
+        panel = new JPanel();
+        panel.setLayout(layout);
+        idField = new JTextField();
+        idField.setColumns(6);
+        idField.addKeyListener(new KeyListener() {
+
+            @Override
+            public void keyTyped(KeyEvent arg0) {
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    btn.doClick();
+                }
+            }
+
+            @Override
+            public void keyPressed(KeyEvent arg0) {
+            }
+        });
+
+        btn = new JButton("Хочу все знать");
+        btn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    String cityID = idField.getText();
+                    if (cityID == null)
+                        throw new IOException("Не введен ID города");
+                    WeatherParser.parse(cityID);
+                    label.setText(today.city + "(сейчас): " + today.temperature
+                            + " С; " + today.weatherType + " Влж:"
+                            + today.humidity + " %");
+
+                    iLabel = new JLabel(new ImageIcon(ImageIO.read(new URL(
+                            "http://img.yandex.net/i/wiz" + today.imgType
+                                    + ".png"))));
+                    tLabel.setText("Погода завтра ночь/день: "+ today.tomNight+"/"+ today.tom);
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+                contentPane.add(iLabel);
+
+            }
+        });
+
+        // расположение элементов, в GUI я не силен, критику приму
+        label = new JLabel("Наберите в поле ID вашего города");
+        label.setFont(new Font("Verdana", Font.PLAIN, 14));
+
+        tLabel = new JLabel("Погода завтра");
+        tLabel.setFont(new Font("Verdana", Font.PLAIN, 14));
+
+        iLabel = new JLabel();
+
+        panel.add(label,
+                new GBC(0, 0, 2, 1).setFill(GBC.NORTH).setWeight(100, 0));
+        panel.add(iLabel,
+                new GBC(0, 1, 2, 1).setFill(GBC.NORTH).setWeight(100, 0));
+
+        panel.add(btn, new GBC(0, 3, 2, 1).setFill(GBC.NORTH).setWeight(100, 0));
+
+        panel.add(idField,
+                new GBC(0, 2, 2, 1).setAnchor(GBC.NORTH)
+                        .setFill(GBC.HORIZONTAL).setIpad(50, 0));
+
+        panel.add(tLabel,
+                new GBC(0, 4, 2, 1).setAnchor(GBC.NORTH)
+                        .setFill(GBC.HORIZONTAL).setIpad(50, 0));
+        add(panel);
+
+        panel.setComponentPopupMenu(menu);
+        pack();
+
+    }
+
+    public static void main(String[] args) {
+        // loginWithProxy();
+        javax.swing.SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                WeatherFrame frame = new WeatherFrame();
+                frame.setDefaultLookAndFeelDecorated(true);
+            }
+        });
+    }
+
+    public void setCity(String id) {
+        this.id = id;
+        idField.setText(id);
+    }
+
+}
+
+public class WeatherParser {
+
+    static Weather tomorrowWeather;
+
+    WeatherParser(WeatherFrame f) {
+
+        tomorrowWeather = new Weather();
+    }
+
+    public static void parse(String cityID) {
+        Weather todayWeather = new Weather();
+        NodeList nl = null;
+        try {
+            Document doc = null;
+            URL url = new URL("http://export.yandex.ru/weather-ng/forecasts/"
+                    + cityID + ".xml");
+            URLConnection uc = url.openConnection();
+            InputStream is = uc.getInputStream();//создали поток
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            doc = (Document)db.parse(is);//непосредственно парсинг
+            //doc.getDocumentElement().normalize();
+
+            //nl = doc.getElementsByTagName("forecast").item(0).getChildNodes();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(null,
+                    "Ошибка при запросе к Яндекс АПИ");
+            ex.printStackTrace();
+        }
+
+        for (int i = 0; i < nl.getLength(); i++) {
+            Node child = nl.item(i);
+
+            if (child instanceof Element) {
+                if (child.getNodeName().equals("fact")) {
+                    Node childOfChild = null;
+                    for (int j = 0; j < child.getChildNodes().getLength(); j++) {
+                        childOfChild = child.getChildNodes().item(j);
+
+                        if ("station".equals(childOfChild.getNodeName())) {
+                            todayWeather.city = childOfChild.getTextContent();
+                        }
+                        if ("temperature".equals(childOfChild.getNodeName()))
+                            todayWeather.temperature = Integer
+                                    .parseInt(childOfChild.getTextContent());
+                        if ("weather_type_short".equals(childOfChild
+                                .getNodeName())) {
+                            todayWeather.weatherType = childOfChild
+                                    .getTextContent();
+                        }
+                        if ("image".equals(childOfChild.getNodeName())) {
+                            todayWeather.imgType = childOfChild
+                                    .getTextContent();
+                        }
+                        if ("humidity".equals(childOfChild.getNodeName())) {
+                            todayWeather.humidity = childOfChild
+                                    .getTextContent();
+                        }
+
+                    }
+                }
+
+                if (child.getNodeName().equals("informer")) {
+                    Node childOfChild = null;
+                    for (int j =0; j<child.getChildNodes().getLength(); j++){
+                        childOfChild = child.getChildNodes().item(j);
+                        if ((childOfChild.getNodeName().equals("temperature")) &&
+                                (childOfChild.getAttributes().item(1).getTextContent().equals("night")))
+                        { todayWeather.tomNight = childOfChild.getTextContent(); }
+
+                        if (childOfChild.getNodeName().equals("temperature") &&
+                                (childOfChild.getAttributes().item(1).getTextContent().equals("tomorrow")))
+                        { todayWeather.tom = childOfChild.getTextContent();}
+                    }
+                }
+            }
+        }
+        WeatherFrame.today = todayWeather;
+    }
+}
+
